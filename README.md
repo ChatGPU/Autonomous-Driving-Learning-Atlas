@@ -9,6 +9,11 @@
 
 🌐 **Live atlas**：<https://chatgpu.github.io/Autonomous-Driving-Learning-Atlas/>
 
+<p align="center">
+  <img src="docs/assets/2x2_map.svg" width="640" alt="2x2 map of AD research paradigms"/>
+</p>
+<p align="center"><em>研究范式 2×2 地图：所有 spine 论文按 (modular ↔ E2E) × (data ↔ knowledge-driven) 摆位。</em></p>
+
 ---
 
 ## 这是什么 / What is this
@@ -53,6 +58,10 @@
 - 用 *年份滑条* 把 2017→2026 的研究范式变迁播成一段 6 秒的"小电影"；
 - 用 *compare 模式*（Shift-click 任意两节点）把两个方法的卡片并排对照；
 - 用 *永久链接* `?node=...&tab=math&playbook=B` 把任意一刻的状态分享给同事。
+
+<p align="center">
+  <img src="docs/assets/timeline_2017_2026.svg" width="720" alt="paradigm timeline 2017-2026"/>
+</p>
 
 ---
 

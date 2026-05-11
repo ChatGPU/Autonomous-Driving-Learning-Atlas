@@ -1,0 +1,30 @@
+{
+  "$comment": "GitHub Codespaces / VS Code devcontainer for one-click cloud setup.",
+  "name": "AD Learning Atlas",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "lts" }
+  },
+  "postCreateCommand": "pip install -r labs/requirements.txt jupyter nbconvert ipykernel && pip install openai",
+  "forwardPorts": [8000, 8888],
+  "portsAttributes": {
+    "8000": { "label": "Atlas (static)" },
+    "8888": { "label": "Jupyter Lab" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "yzhang.markdown-all-in-one",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "terminal.integrated.env.linux": {
+          "LLM_BACKEND": "mock"
+        }
+      }
+    }
+  },
+  "remoteUser": "vscode"
+}

@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" font-family="-apple-system, 'Helvetica Neue', sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e1530"/>
+      <stop offset="100%" stop-color="#0b1020"/>
+    </linearGradient>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa6c8"/>
+    </marker>
+  </defs>
+  <rect width="720" height="480" fill="url(#bg)"/>
+
+  <!-- title -->
+  <text x="360" y="32" fill="#e6ecff" font-size="18" font-weight="700" text-anchor="middle">
+    ê¨~vv 2×2 0þ / The 2×2 Map
+  </text>
+  <text x="360" y="52" fill="#93a3cc" font-size="12" text-anchor="middle">
+    (modular ” end-to-end)  ×  (data-driven ” knowledge-driven)
+  </text>
+
+  <!-- axes -->
+  <line x1="360" y1="80" x2="360" y2="450" stroke="#38446b" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="80"  y1="265" x2="640" y2="265" stroke="#38446b" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <!-- axis labels -->
+  <text x="80"  y="265" fill="#9aa6c8" font-size="13" text-anchor="end" dx="-6">modular</text>
+  <text x="640" y="265" fill="#9aa6c8" font-size="13" text-anchor="start" dx="6">end-to-end</text>
+  <text x="360" y="80"  fill="#9aa6c8" font-size="13" text-anchor="middle" dy="-4">knowledge-driven</text>
+  <text x="360" y="465" fill="#9aa6c8" font-size="13" text-anchor="middle">data-driven</text>
+
+  <!-- nodes -->
+  <!-- modular x knowledge: DiLu, Agent-Driver -->
+  <g transform="translate(170,140)">
+    <circle r="40" fill="#c62828"/>
+    <text x="0" y="-3" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">Agent-Driver</text>
+    <text x="0" y="14" fill="#ffd6c4" font-size="10" text-anchor="middle">tool + memory + LLM</text>
+  </g>
+  <g transform="translate(255,210)">
+    <circle r="36" fill="#c62828"/>
+    <text x="0" y="-3" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">DiLu</text>
+    <text x="0" y="13" fill="#ffd6c4" font-size="10" text-anchor="middle">reasoning + reflect</text>
+  </g>
+
+  <!-- end-to-end x knowledge: PlanT -->
+  <g transform="translate(485,180)">
+    <circle r="36" fill="#ef6c00"/>
+    <text x="0" y="-3" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">PlanT</text>
+    <text x="0" y="13" fill="#ffe2c1" font-size="10" text-anchor="middle">object-level tokens</text>
+  </g>
+
+  <!-- end-to-end x data-driven: UniAD, VADv2 -->
+  <g transform="translate(530,330)">
+    <circle r="44" fill="#ef6c00"/>
+    <text x="0" y="-3" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">UniAD</text>
+    <text x="0" y="14" fill="#ffe2c1" font-size="10" text-anchor="middle">dense BEV + 5 queries</text>
+  </g>
+  <g transform="translate(620,400)">
+    <circle r="28" fill="#ef6c00"/>
+    <text x="0" y="-1" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">VADv2</text>
+    <text x="0" y="14" fill="#ffe2c1" font-size="9" text-anchor="middle">prob plans</text>
+  </g>
+
+  <!-- modular x data-driven: TransFuser -->
+  <g transform="translate(180,360)">
+    <circle r="32" fill="#2e7d32"/>
+    <text x="0" y="-2" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">TransFuser</text>
+    <text x="0" y="13" fill="#d6f1d6" font-size="10" text-anchor="middle">BC + sensor fusion</text>
+  </g>
+
+  <!-- diagonal arc: hybrid pipeline DriveVLM-Dual -->
+  <g transform="translate(380,395)">
+    <ellipse rx="80" ry="22" fill="#1b1f3c" stroke="#7c4dff" stroke-width="2"/>
+    <text x="0" y="-2" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">DriveVLM-Dual</text>
+    <text x="0" y="14" fill="#cabfff" font-size="10" text-anchor="middle">slow VLM + fast IDM (hybrid)</text>
+  </g>
+
+  <!-- CF-VLA in upper right (frontier) -->
+  <g transform="translate(620,150)">
+    <circle r="34" fill="#7c4dff"/>
+    <text x="0" y="-3" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">CF-VLA</text>
+    <text x="0" y="13" fill="#cabfff" font-size="10" text-anchor="middle">self-reflective VLA</text>
+  </g>
+
+  <!-- legend -->
+  <g transform="translate(40,30)">
+    <circle cx="6" cy="6" r="6" fill="#c62828"/><text x="18" y="10" fill="#9aa6c8" font-size="11">LLM-agent (vlm_vla)</text>
+    <circle cx="6" cy="22" r="6" fill="#ef6c00"/><text x="18" y="26" fill="#9aa6c8" font-size="11">end-to-end AD (e2e_ad)</text>
+    <circle cx="6" cy="38" r="6" fill="#2e7d32"/><text x="18" y="42" fill="#9aa6c8" font-size="11">SSL / sensor fusion</text>
+    <circle cx="6" cy="54" r="6" fill="#7c4dff"/><text x="18" y="58" fill="#9aa6c8" font-size="11">hybrid / frontier</text>
+  </g>
+</svg>

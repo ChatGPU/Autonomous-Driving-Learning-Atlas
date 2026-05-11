@@ -10,6 +10,13 @@
 🌐 **Live atlas**：<https://chatgpu.github.io/Autonomous-Driving-Learning-Atlas/>
 
 <p align="center">
+  <a href="https://chatgpu.github.io/Autonomous-Driving-Learning-Atlas/?node=paper:2212.10156">
+    <img src="docs/assets/screenshot_atlas.png" width="780" alt="Atlas live site (graph + side panel)"/>
+  </a>
+</p>
+<p align="center"><em>点击图片直达"打开 UniAD 卡片"的可分享 permalink。整张图谱 75 节点 / 122 条带类型边。</em></p>
+
+<p align="center">
   <img src="docs/assets/2x2_map.svg" width="640" alt="2x2 map of AD research paradigms"/>
 </p>
 <p align="center"><em>研究范式 2×2 地图：所有 spine 论文按 (modular ↔ E2E) × (data ↔ knowledge-driven) 摆位。</em></p>

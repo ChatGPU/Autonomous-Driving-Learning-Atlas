@@ -1,0 +1,11 @@
+numpy>=1.26
+matplotlib>=3.8
+torch>=2.3
+torchvision>=0.18
+gymnasium>=0.29
+highway-env>=1.10
+einops>=0.8
+# optional LLM backends — uncomment as needed
+# openai>=1.40
+# transformers>=4.43
+# accelerate>=0.32

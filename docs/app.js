@@ -72,11 +72,6 @@
   // ---------------------------------------------------------------- cytoscape
 
   function buildCy(elements) {
-    // Register cytoscape-fcose layout (UMD ships as window.cytoscapeFcose).
-    if (window.cytoscape && window.cytoscapeFcose && !window._fcoseRegistered) {
-      cytoscape.use(window.cytoscapeFcose);
-      window._fcoseRegistered = true;
-    }
     const cy = cytoscape({
       container: $("#cy"),
       elements,
@@ -137,7 +132,7 @@
         { selector: "edge[rel = 'implements']", style: { "line-color": "#c084fc", "line-style": "dotted", "target-arrow-color": "#c084fc" }},
         { selector: "edge.dim", style: { "opacity": 0.05 } },
       ],
-      layout: { name: window._fcoseRegistered ? "fcose" : "cose", animate: false },
+      layout: { name: "cose", animate: false, nodeRepulsion: () => 8000, idealEdgeLength: () => 95, gravity: 1.0 },
     });
     cy.on("tap", "node", evt => onNodeTap(evt));
     cy.on("tap", evt => { if (evt.target === cy) closeRight(); });
@@ -170,12 +165,7 @@
     const cy = STATE.cy;
     if (!cy) return;
     if (kind === "fcose") {
-      const layoutName = window._fcoseRegistered ? "fcose" : "cose";
-      try {
-        cy.layout({ name: layoutName, animate: false, nodeRepulsion: 7500, idealEdgeLength: 95 }).run();
-      } catch (e) {
-        cy.layout({ name: "cose", animate: false }).run();
-      }
+      cy.layout({ name: "cose", animate: false, nodeRepulsion: () => 8000, idealEdgeLength: () => 95, gravity: 1.0 }).run();
       return;
     }
     if (kind === "topic") {

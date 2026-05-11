@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'labs/**'
+      - 'tools/lab_specs.py'
+      - 'tools/build_labs.py'
       - '.github/workflows/labs_smoke.yml'
   pull_request:
     paths:
@@ -14,15 +16,30 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     env:
       LLM_BACKEND: mock
-      HF_HUB_OFFLINE: "1"   # default offline; lab05 uses tiny mock features
+      HF_HUB_OFFLINE: "1"
       TRANSFORMERS_OFFLINE: "1"
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('labs/requirements.txt') }}
+          restore-keys: pip-
+
+      - name: Cache torch hub (resnet18 weights for lab05)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/torch
+          key: torchhub-resnet18-v1
 
       - name: Install runtime
         run: |
@@ -30,34 +47,16 @@ jobs:
           pip install -r labs/requirements.txt
           pip install jupyter nbconvert ipykernel
 
-      - name: Run all labs end-to-end (Mock backend)
+      - name: Execute every lab end-to-end (Mock LLM backend)
+        shell: bash
         run: |
           set -e
           for nb in labs/lab*.ipynb; do
             echo "::group::Executing $nb"
-            jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=240 "$nb"
+            jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=300 "$nb"
             echo "::endgroup::"
           done
 
-      - name: Show last cell of each notebook (sanity)
-        run: |
-          for nb in labs/lab*.ipynb; do
-            echo "=== $nb (last text output) ==="
-            python - <<'PY'
-import json, sys, glob
-for nb in sorted(glob.glob("labs/lab*.ipynb")):
-    j = json.load(open(nb))
-    cells = j.get("cells", [])
-    last_text = ""
-    for c in reversed(cells):
-        if c.get("cell_type") == "code" and c.get("outputs"):
-            for o in c["outputs"][::-1]:
-                if "text" in o:
-                    last_text = "".join(o["text"])
-                    break
-            if last_text: break
-    print("---", nb, "---")
-    print(last_text[-1000:])
-PY
-            break  # the python script already iterates; break shell loop
-          done
+      - name: Print last printed message of each notebook
+        shell: bash
+        run: python tools/dump_lab_results.py

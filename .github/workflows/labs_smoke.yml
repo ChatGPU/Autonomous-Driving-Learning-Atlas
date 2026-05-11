@@ -1,0 +1,63 @@
+name: Labs smoke (Mock backend)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'labs/**'
+      - '.github/workflows/labs_smoke.yml'
+  pull_request:
+    paths:
+      - 'labs/**'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      LLM_BACKEND: mock
+      HF_HUB_OFFLINE: "1"   # default offline; lab05 uses tiny mock features
+      TRANSFORMERS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip wheel
+          pip install -r labs/requirements.txt
+          pip install jupyter nbconvert ipykernel
+
+      - name: Run all labs end-to-end (Mock backend)
+        run: |
+          set -e
+          for nb in labs/lab*.ipynb; do
+            echo "::group::Executing $nb"
+            jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=240 "$nb"
+            echo "::endgroup::"
+          done
+
+      - name: Show last cell of each notebook (sanity)
+        run: |
+          for nb in labs/lab*.ipynb; do
+            echo "=== $nb (last text output) ==="
+            python - <<'PY'
+import json, sys, glob
+for nb in sorted(glob.glob("labs/lab*.ipynb")):
+    j = json.load(open(nb))
+    cells = j.get("cells", [])
+    last_text = ""
+    for c in reversed(cells):
+        if c.get("cell_type") == "code" and c.get("outputs"):
+            for o in c["outputs"][::-1]:
+                if "text" in o:
+                    last_text = "".join(o["text"])
+                    break
+            if last_text: break
+    print("---", nb, "---")
+    print(last_text[-1000:])
+PY
+            break  # the python script already iterates; break shell loop
+          done

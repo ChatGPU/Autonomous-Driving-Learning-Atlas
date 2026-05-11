@@ -1,0 +1,28 @@
+name: Validate graph & links
+
+on:
+  pull_request:
+    paths:
+      - 'docs/data/**'
+      - 'concepts.md'
+      - 'tools/**'
+      - '.github/workflows/validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/data/**'
+      - 'concepts.md'
+      - 'tools/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Validate graph.json
+        run: python tools/validate_graph.py
+      - name: Check external deep links
+        run: python tools/check_links.py --max-failures 5
+        continue-on-error: true

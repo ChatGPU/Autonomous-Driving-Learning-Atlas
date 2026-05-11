@@ -18,9 +18,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CARDS = sorted((ROOT / "docs" / "data" / "cards").glob("*.md"))
+CARDS = sorted(p for p in (ROOT / "docs" / "data" / "cards").glob("*.md")
+               if p.name != "_template.md")
 
-URL_RE = re.compile(r"https?://[^\s\)\]\"<>]+")
+URL_RE = re.compile(r"https?://[^\s\)\]\"<>{}]+")
 
 UA = "Mozilla/5.0 (compatible; ad-atlas-link-checker/1.0)"
 

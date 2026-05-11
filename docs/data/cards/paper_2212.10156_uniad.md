@@ -21,7 +21,7 @@ deep_links:
   - {label: "PDF p.4 §3.2（5 个查询模块）", url: "https://arxiv.org/pdf/2212.10156#page=4"}
   - {label: "PDF p.6 §4（Planner & 规划损失）", url: "https://arxiv.org/pdf/2212.10156#page=6"}
   - {label: "OpenDriveLab/UniAD（官方代码 + 2.0 重构版）", url: "https://github.com/OpenDriveLab/UniAD"}
-  - {label: "项目页与权重", url: "https://opendrivelab.github.io/UniAD/"}
+  - {label: "OpenDriveLab 主页（含权重 / 项目页）", url: "https://opendrivelab.com/"}
 bibtex: |
   @inproceedings{hu2023planning,
     title     = {Planning-oriented Autonomous Driving},

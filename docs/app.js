@@ -72,6 +72,11 @@
   // ---------------------------------------------------------------- cytoscape
 
   function buildCy(elements) {
+    // Register cytoscape-fcose layout (UMD ships as window.cytoscapeFcose).
+    if (window.cytoscape && window.cytoscapeFcose && !window._fcoseRegistered) {
+      cytoscape.use(window.cytoscapeFcose);
+      window._fcoseRegistered = true;
+    }
     const cy = cytoscape({
       container: $("#cy"),
       elements,
@@ -104,7 +109,8 @@
         { selector: "node[kind = 'channel']", style: { "shape": "round-tag" } },
         { selector: "node[kind = 'course']", style: { "shape": "round-octagon" } },
         { selector: "node:selected", style: {
-            "border-color": "#ff8a3d", "border-width": 6, "shadow-blur": 16, "shadow-color": "#ff8a3d",
+            "border-color": "#ff8a3d", "border-width": 6,
+            "background-blacken": -0.15,
         }},
         { selector: "node.dim", style: { "opacity": 0.18 } },
         { selector: "node.hi", style: { "border-color": "#ffd166", "border-width": 4 } },
@@ -131,7 +137,7 @@
         { selector: "edge[rel = 'implements']", style: { "line-color": "#c084fc", "line-style": "dotted", "target-arrow-color": "#c084fc" }},
         { selector: "edge.dim", style: { "opacity": 0.05 } },
       ],
-      layout: layoutFor("fcose"),
+      layout: { name: window._fcoseRegistered ? "fcose" : "cose", animate: false },
     });
     cy.on("tap", "node", evt => onNodeTap(evt));
     cy.on("tap", evt => { if (evt.target === cy) closeRight(); });
@@ -164,7 +170,12 @@
     const cy = STATE.cy;
     if (!cy) return;
     if (kind === "fcose") {
-      cy.layout({ name: "fcose", animate: false, nodeRepulsion: 7500, idealEdgeLength: 95 }).run();
+      const layoutName = window._fcoseRegistered ? "fcose" : "cose";
+      try {
+        cy.layout({ name: layoutName, animate: false, nodeRepulsion: 7500, idealEdgeLength: 95 }).run();
+      } catch (e) {
+        cy.layout({ name: "cose", animate: false }).run();
+      }
       return;
     }
     if (kind === "topic") {

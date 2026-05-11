@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: "Autonomous-Driving Learning Atlas"
+message: "If you use this atlas in research or teaching, please cite it."
+type: dataset
+authors:
+  - name: "ChatGPU / Autonomous-Driving-Learning-Atlas contributors"
+repository-code: "https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas"
+url: "https://chatgpu.github.io/Autonomous-Driving-Learning-Atlas/"
+license: MIT
+license-url: "https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas/blob/main/LICENSE"
+keywords:
+  - autonomous driving
+  - reinforcement learning
+  - vision-language-action
+  - foundation models
+  - learning resources
+  - interactive knowledge graph
+  - bilingual
+abstract: >
+  An interactive, opinionated, bilingual (中文/English) learning atlas that
+  organises a curated set of papers, video courses, and an essay into a single
+  knowledge graph for autonomous-driving researchers. The atlas provides
+  per-resource study cards, deep-anchored links into PDFs and lecture
+  timestamps, fully working Jupyter labs that re-derive each paper's central
+  claim, and reading playbooks tailored to different reader backgrounds.

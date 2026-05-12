@@ -25,6 +25,7 @@
     <span class="subtitle">从数学直觉到自动驾驶前沿 · ML · RL · VLA</span>
   </div>
   <nav class="topbar-actions">
+    <button id="menuToggle" class="menu-toggle" aria-controls="leftbar" aria-expanded="false">路径与筛选</button>
     <input id="search" type="search" placeholder="搜索论文、概念或路径（按 /）…" autocomplete="off" />
     <select id="layout">
       <option value="cose">自由探索：让关系自己拉开</option>
@@ -46,23 +47,24 @@
   <button class="pb" data-pb="D">Path D · LLM·VLM·VLA</button>
   <button class="pb" data-pb="ALL">全部节点</button>
   <p id="resultCount" class="result-count">—</p>
+  <p id="playbookNote" class="playbook-note">不确定从哪里开始？先选一条最接近你背景的路径，图谱会自动把相关节点点亮。</p>
 
   <h3>主题筛选</h3>
   <div id="topicChips" class="chips"></div>
   <h3>阶段</h3>
   <div id="phaseChips" class="chips">
-    <button class="chip" data-phase="prereq">prereq</button>
-    <button class="chip" data-phase="core">core</button>
-    <button class="chip" data-phase="frontier">frontier</button>
+    <button class="chip" data-phase="prereq">先修直觉</button>
+    <button class="chip" data-phase="core">核心方法</button>
+    <button class="chip" data-phase="frontier">前沿探索</button>
   </div>
   <h3>层级</h3>
   <div id="tierChips" class="chips">
-    <button class="chip" data-tier="spine">spine</button>
-    <button class="chip" data-tier="S">Tier-S</button>
-    <button class="chip" data-tier="A">Tier-A</button>
-    <button class="chip" data-tier="B">Tier-B</button>
-    <button class="chip" data-tier="concept">concept</button>
-    <button class="chip" data-tier="lab">lab</button>
+    <button class="chip" data-tier="spine">主线资源</button>
+    <button class="chip" data-tier="S">经典基石</button>
+    <button class="chip" data-tier="A">关键延伸</button>
+    <button class="chip" data-tier="B">定位参考</button>
+    <button class="chip" data-tier="concept">概念</button>
+    <button class="chip" data-tier="lab">实验</button>
   </div>
   <h3>关系图例</h3>
   <ul class="legend">
@@ -83,6 +85,18 @@
 </aside>
 
 <main id="cy"></main>
+
+<section class="welcome-card" id="welcomeCard" aria-live="polite">
+  <button id="dismissWelcome" aria-label="关闭新手引导">×</button>
+  <p class="eyebrow">第一次来？</p>
+  <h2>把它当成一张可以点击的学习路线图。</h2>
+  <ol>
+    <li><strong>先选背景</strong>：左侧 Path A–D 会把你最可能需要的节点点亮。</li>
+    <li><strong>再点一个节点</strong>：右侧卡片会先讲直觉，再讲公式和工程细节。</li>
+    <li><strong>卡住时对比</strong>：按住 <kbd>Shift</kbd> 点两个节点，看看两条路线真正分歧在哪里。</li>
+    <li><strong>最后动手</strong>：lab 节点把论文里的想法变成可运行的小实验。</li>
+  </ol>
+</section>
 
 <aside class="rightbar" id="rightbar" aria-hidden="true">
   <header>

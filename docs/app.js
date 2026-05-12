@@ -59,6 +59,32 @@
   function stripQuotes(s) {
     return String(s ?? "").trim().replace(/^['"]|['"]$/g, "");
   }
+  const LABELS = {
+    topic: {
+      math_foundations: "数学直觉",
+      rl_foundations: "RL 基础",
+      deep_rl: "深度 RL",
+      ssl_vision: "自监督视觉",
+      e2e_ad: "端到端 AD",
+      vlm_vla: "VLM / VLA",
+      brain_inspired: "类脑高效",
+      meta_philosophy: "研究哲学",
+      companion_media: "陪伴式视频",
+    },
+    phase: { prereq: "先修直觉", core: "核心方法", frontier: "前沿探索" },
+    tier: { spine: "主线", S: "经典", A: "延伸", B: "定位", concept: "概念", lab: "实验" },
+    kind: { paper: "论文", channel: "频道", course: "课程", essay: "短文", concept: "概念", lab: "实验" },
+  };
+  const PLAYBOOK_NOTES = {
+    A: "这条路从 Bellman 方程和策略梯度出发，最后走到 DiLu / Agent-Driver 里的 LLM 决策循环。",
+    B: "这条路适合 CV / 感知背景：先把 query、BEV、ViT 看清楚，再进入 UniAD、PlanT 与 DriveVLM。",
+    C: "这条路关注车端算力与能耗：把 Transformer 的能力、DINO 的 scaling、Spike 路线的效率放在同一张坐标系里看。",
+    D: "这条路把 LLM、VLM、VLA 串起来：从 Transformer/GPT 的基础直觉走到 DriveVLM 与 CF-VLA。",
+    ALL: "全图已经展开。你可以搜索一个熟悉的节点，或用年份滑条看研究范式怎样演化。",
+  };
+  function label(kind, value) {
+    return (LABELS[kind] && LABELS[kind][value]) || value || "";
+  }
 
   // ---------------------------------------------------------------- graph load
 
@@ -118,6 +144,7 @@
             "background-blacken": -0.15,
         }},
         { selector: "node.dim", style: { "opacity": 0.18 } },
+        { selector: "node.neighbor", style: { "opacity": 1, "background-blacken": -0.08 } },
         { selector: "node.hi", style: { "border-color": "#ffd166", "border-width": 4 } },
 
         // edges
@@ -141,11 +168,24 @@
         { selector: "edge[rel = 'feeds']",      style: { "line-color": "#ffb74d", "line-style": "dashed", "target-arrow-color": "#ffb74d" }},
         { selector: "edge[rel = 'implements']", style: { "line-color": "#c084fc", "line-style": "dotted", "target-arrow-color": "#c084fc" }},
         { selector: "edge.dim", style: { "opacity": 0.05 } },
+        { selector: "edge.hi", style: { "opacity": 1, "width": 3 } },
       ],
       layout: { name: "cose", animate: false, nodeRepulsion: () => 8000, idealEdgeLength: () => 95, gravity: 1.0 },
     });
     cy.on("tap", "node", evt => onNodeTap(evt));
     cy.on("tap", evt => { if (evt.target === cy) closeRight(); });
+    cy.on("mouseover", "node", evt => {
+      const n = evt.target;
+      cy.batch(() => {
+        cy.elements().removeClass("hi neighbor");
+        n.addClass("hi");
+        n.closedNeighborhood().addClass("neighbor");
+        n.connectedEdges().addClass("hi");
+      });
+    });
+    cy.on("mouseout", "node", () => {
+      cy.batch(() => cy.elements().removeClass("hi neighbor"));
+    });
     return cy;
   }
 
@@ -387,10 +427,10 @@
     const tier = (data.tier || fm.tier || "").replace(/['"]/g, "");
     return `
       <div class="meta">
-        <span class="badge ${tier}">${escapeHtml(tier)}</span>
-        <span class="badge">${escapeHtml(data.kind)}</span>
-        <span class="badge">${escapeHtml(data.topic)}</span>
-        <span class="badge">${escapeHtml(data.phase)}</span>
+        <span class="badge ${tier}">${escapeHtml(label("tier", tier))}</span>
+        <span class="badge">${escapeHtml(label("kind", data.kind))}</span>
+        <span class="badge">${escapeHtml(label("topic", data.topic))}</span>
+        <span class="badge">${escapeHtml(label("phase", data.phase))}</span>
         ${data.year ? `<span class="badge">${data.year}</span>` : ""}
       </div>`;
   }
@@ -654,7 +694,7 @@
     const wrap = $("#topicChips");
     Object.entries(STATE.graph.topic_palette).forEach(([t, color]) => {
       const b = document.createElement("button");
-      b.className = "chip"; b.textContent = t;
+      b.className = "chip"; b.textContent = label("topic", t);
       b.dataset.topic = t;
       b.style.setProperty("--chip-color", color);
       b.onclick = () => {
@@ -662,6 +702,7 @@
         else STATE.activeTopics.add(t);
         b.classList.toggle("active");
         applyFilters();
+        syncPermalink();
       };
       wrap.appendChild(b);
     });
@@ -675,6 +716,7 @@
         else STATE.activePhases.add(p);
         b.classList.toggle("active");
         applyFilters();
+        syncPermalink();
       };
     });
     $$("#tierChips .chip").forEach(b => {
@@ -684,6 +726,7 @@
         else STATE.activeTiers.add(t);
         b.classList.toggle("active");
         applyFilters();
+        syncPermalink();
       };
     });
   }
@@ -694,6 +737,8 @@
         $$(".pb").forEach(x => x.classList.remove("active"));
         b.classList.add("active");
         STATE.playbook = b.dataset.pb;
+        const note = $("#playbookNote");
+        if (note) note.textContent = PLAYBOOK_NOTES[STATE.playbook] || "这条路径会把相关节点点亮，帮助你只看当前最需要的一小张子图。";
         applyFilters();
         if (STATE.playbook && STATE.playbook !== "ALL") {
           const pb = STATE.graph.playbooks[STATE.playbook];
@@ -725,11 +770,31 @@
     });
 
     $("#layout").onchange = e => { applyLayout(e.target.value); syncPermalink(); };
+    const menuToggle = $("#menuToggle");
+    if (menuToggle) {
+      menuToggle.onclick = () => {
+        const open = $("#leftbar").classList.toggle("open");
+        menuToggle.setAttribute("aria-expanded", String(open));
+      };
+    }
+    const welcome = $("#welcomeCard");
+    const dismissWelcome = $("#dismissWelcome");
+    if (welcome && localStorage.getItem("atlas-welcome-dismissed") === "1") {
+      welcome.classList.add("hidden");
+    }
+    if (dismissWelcome) {
+      dismissWelcome.onclick = () => {
+        if (welcome) welcome.classList.add("hidden");
+        localStorage.setItem("atlas-welcome-dismissed", "1");
+      };
+    }
     $("#resetBtn").onclick = () => {
       STATE.activeTopics.clear(); STATE.activePhases.clear(); STATE.activeTiers.clear();
       $$(".chip").forEach(c => c.classList.remove("active"));
       STATE.playbook = null;
       $$(".pb").forEach(c => c.classList.remove("active"));
+      const note = $("#playbookNote");
+      if (note) note.textContent = "不确定从哪里开始？先选一条最接近你背景的路径，图谱会自动把相关节点点亮。";
       search.value = "";
       STATE.searchQuery = "";
       STATE.yearMax = 2026; $("#yearSlider").value = 2026; $("#yearLabel").textContent = "2026";

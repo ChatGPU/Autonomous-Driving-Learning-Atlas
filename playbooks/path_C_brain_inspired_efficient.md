@@ -16,7 +16,7 @@
 | 6 | [Mamba](../docs/data/cards/paper_mamba.md) | 另一种"线性复杂度 + 通用学习"的折中尝试。 | 30 min |
 | 7 | **配套实验** | [`lab06`](../labs/lab06_spike_driven_attention_mnist.ipynb) — SDSA 与 vanilla attention 的乘法计数对比 | 1 h |
 
-## 完成时的检查问题
+## 读完后的自检问题
 
 1. 写出 SDSA 的 mask-and-add 公式，并和 scaled-dot-product attention 在每一步逐个对照。
 2. 解释为何残差连接需要在脉冲驱动 transformer 中"移到激活之前"。

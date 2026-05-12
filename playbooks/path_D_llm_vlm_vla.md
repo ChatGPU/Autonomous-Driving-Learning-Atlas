@@ -8,7 +8,7 @@
 
 | # | 节点 | 重点 | 估时 |
 |---|---|---|---|
-| 1 | [3Blue1Brown · Attention/Transformers](../docs/data/cards/channel_3blue1brown.md) | 必看那两集。 | 1 h |
+| 1 | [3Blue1Brown · Attention/Transformers](../docs/data/cards/channel_3blue1brown.md) | 先用动画建立 attention 的空间直觉，再去读 VLM / VLA 会轻很多。 | 1 h |
 | 2 | [Mu Li · GPT 1/2/3 精读](../docs/data/cards/channel_mu_li_bilibili.md) | 把 LLM 的"几个跨代跃迁"压成 1.5 小时。 | 1.5 h |
 | 3 | [Transformer (Vaswani)](../docs/data/cards/paper_vaswani2017.md) + [GPT-3](../docs/data/cards/paper_gpt3.md) | 必读经典。 | 2 h |
 | 4 | [LLaVA / Qwen-VL](../docs/data/cards/paper_llava.md) | 你将要"扛上车"的 backbone 候选。 | 30 min |
@@ -17,7 +17,7 @@
 | 7 | [GAIA-1](../docs/data/cards/paper_gaia1.md) + [DriveDreamer](../docs/data/cards/paper_drivedreamer.md) + [World Models](../docs/data/cards/paper_world_models.md) + [LINGO-2](../docs/data/cards/paper_lingo2.md) | 与 reasoning VLA 同期但走 world-model 这条路的对照组。 | 2 h |
 | 8 | **配套实验** | [`lab07`](../labs/lab07_dilu_llm_decision_loop.ipynb) → [`lab08`](../labs/lab08_agent_driver_tool_calling.ipynb) → [`lab09`](../labs/lab09_drivevlm_dual_pipeline.ipynb) → [`lab10`](../labs/lab10_cfvla_counterfactual_replanner.ipynb) | 4 h |
 
-## 完成时的检查问题
+## 读完后的自检问题
 
 1. 用一张 4-列表格把 DiLu / Agent-Driver / DriveVLM / CF-VLA 的核心结构两两对比：*感知接口（图 vs JSON）/ 推理形式 / 训练 pipeline / 部署形态*。
 2. 反事实推理（CF-VLA）和 world-model rollout（GAIA-1）在数学上各自是什么 *expectation over imagined futures*？

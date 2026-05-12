@@ -70,8 +70,8 @@ $$
 - 配套实验：本图谱 [lab01](../../../labs/lab01_zhao_value_iteration_gridworld.ipynb) 在 4×4 stochastic gridworld 上跑值迭代，画收敛曲线 + $V^\star$ 热图。
 
 ## 深度阅读路径 / Deep-anchored reading order
-1. **Lecture 1（基本概念）+ Lecture 2（Bellman 方程）**——必看；
-2. **Lecture 3（Bellman 最优）+ Lecture 4（值迭代/策略迭代）**——必看；
+1. **Lecture 1（基本概念）+ Lecture 2（Bellman 方程）**——先建立状态、动作、回报的语言；
+2. **Lecture 3（Bellman 最优）+ Lecture 4（值迭代/策略迭代）**——再看“递推地想未来”如何变成算法；
 3. **Lecture 5–6（MC / TD）**——为深度 RL 打底；
 4. **Lecture 7（值函数近似）**——通往 DQN 的直接桥梁；
 5. **Lecture 8 + 10（策略梯度 + Actor-Critic）**——可与 CS285 Lec 5、Lec 6 并读。

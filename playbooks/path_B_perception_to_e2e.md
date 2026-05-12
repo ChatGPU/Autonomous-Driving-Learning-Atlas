@@ -19,7 +19,7 @@
 | 9 | **配套实验** | [`lab03`](../labs/lab03_uniad_query_intuition.ipynb) UniAD query → [`lab04`](../labs/lab04_plant_object_level_planner.ipynb) PlanT → [`lab05`](../labs/lab05_dinov3_features_minidata.ipynb) DINOv3 → [`lab09`](../labs/lab09_drivevlm_dual_pipeline.ipynb) DriveVLM-Dual → [`lab10`](../labs/lab10_cfvla_counterfactual_replanner.ipynb) CF-VLA | 4 h |
 | 10 | [AD benchmarks](../docs/data/cards/benchmarks_ad.md) | nuScenes / CARLA / NAVSIM / Bench2Drive 的差异 —— *指标不能跨基准比* | 30 min |
 
-## 完成时的检查问题
+## 读完后的自检问题
 
 1. 在 2×2 地图（modular↔E2E × data↔knowledge）上画出 UniAD、PlanT、DriveVLM、Agent-Driver、CF-VLA 的位置，并解释为什么。
 2. UniAD 的 5 路 query 与 DETR 的 N 个 object query 是同一种东西吗？相同 / 不同各在哪里？

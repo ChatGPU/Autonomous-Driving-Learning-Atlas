@@ -61,7 +61,7 @@ Sutton 给出的两类长跑赢家是：
 - 不要把 Bitter Lesson 极端化成"人类 insight 一文不值"。Sutton 的精确陈述是：*hand-crafted knowledge 短期有用、长期会被超越*。研究者真正要警惕的是**把短期 insight 变成长期承担**。
 
 ## 深度阅读路径 / Deep-anchored reading order
-1. **PDF p.1 第一段**——核心论点，背下来。
+1. **PDF p.1 第一段**——先抓住核心论点：长期来看，利用计算规模的通用方法更容易胜出。
 2. **PDF p.1 第二段（chess）+ p.2（Go）**——两个最经典例子。
 3. **PDF p.2 倒数第二段**——*"these methods build in our discoveries... they make it harder, not easier, for us to see how the simpler methods will succeed."* —— 全文最警醒的一句。
 4. **2025 后续访谈**——Sutton 自己对 LLM scale 路径的最新看法（强调 *continual learning* 是 missing piece）。

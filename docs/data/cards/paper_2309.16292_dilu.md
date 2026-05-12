@@ -76,7 +76,7 @@ $$
 - License：Apache-2.0。
 
 ## 深度阅读路径 / Deep-anchored reading order
-1. **PDF p.1 摘要 + p.2 §1**——把 *knowledge-driven vs data-driven* 这段背景背下来；它定义了后续社区话术。
+1. **PDF p.1 摘要 + p.2 §1**——先看 *knowledge-driven vs data-driven* 这组对照如何被提出；后续很多 VLA 论文都会沿用这套语言。
 2. **PDF p.3 Fig.2**——三件套总图。
 3. **PDF p.4 §3.2 Reasoning prompt**——可以直接抄做工程模板。
 4. **PDF p.5 §3.3 Reflection**——理解"反思如何改写 memory"，对比 Sutton 在 *Continual Learning* 里讨论的 "in-context vs gradient-based"。

@@ -4,6 +4,8 @@
 > **预计时长**：~18 小时。
 > **完成后你能**：解释 *VLM → VLA → reasoning VLA* 的演进路径；判断 [DiLu](../docs/data/cards/paper_2309.16292_dilu.md) / [Agent-Driver](../docs/data/cards/paper_2311.10813_agent_driver.md) / [DriveVLM](../docs/data/cards/paper_2402.12289_drivevlm.md) / [CF-VLA](../docs/data/cards/paper_2512.24426_cfvla.md) 各自属于哪个子范式；用 [`lab07`](../labs/lab07_dilu_llm_decision_loop.ipynb)–[`lab10`](../labs/lab10_cfvla_counterfactual_replanner.ipynb) 在自家电脑跑通最小 LLM-driver。
 
+如果你从 LLM / Agent 背景进入自动驾驶，最容易低估的是“动作”这件事。会看图、会解释，还不等于能安全开车。这条路线会把你从 Transformer 和 GPT 的语言直觉，一步步带到 VLM 看图、VLA 输出 meta-action、再到 CF-VLA 在执行前做反事实自检。
+
 ## 推荐顺序
 
 | # | 节点 | 重点 | 估时 |

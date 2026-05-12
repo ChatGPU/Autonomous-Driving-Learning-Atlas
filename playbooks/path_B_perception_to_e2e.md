@@ -4,6 +4,8 @@
 > **预计时长**：~22 小时。
 > **完成后你能**：从 ViT/DETR 一路推到 UniAD/PlanT/DriveVLM/CF-VLA，并懂得在 *modular ↔ end-to-end × data-driven ↔ knowledge-driven* 二维地图上为新论文定位。
 
+如果你已经熟悉 detection、segmentation 或 BEV perception，这条路会帮你把视角从“看见什么”移到“看见之后怎样开”。最重要的线索是 query：它先在 DETR 里找物体，后来在 BEVFormer / UniAD 里变成对道路世界的可微提问，最后又被 VLM / VLA 路线接到语言推理上。
+
 ## 推荐顺序
 
 | # | 节点 | 内容 / 重点 | 估时 |

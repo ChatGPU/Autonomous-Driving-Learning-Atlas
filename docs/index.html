@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Autonomous-Driving Learning Atlas</title>
-<meta name="description" content="一个面向博士级自动驾驶研究者的、可交互的中英双语机器学习+强化学习+自动驾驶学习地图。" />
+<meta name="description" content="一个把机器学习、强化学习与自动驾驶论文串成可交互学习路径的中英双语地图。" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e293b'/%3E%3Ccircle cx='20' cy='20' r='6' fill='%23ef6c00'/%3E%3Ccircle cx='44' cy='20' r='6' fill='%232e7d32'/%3E%3Ccircle cx='32' cy='44' r='6' fill='%23c62828'/%3E%3Cpath d='M20 20 L44 20 L32 44 Z' stroke='%23cbd5e1' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" />
 <link rel="stylesheet" href="style.css" />
@@ -22,29 +22,30 @@
   <div class="brand">
     <span class="logo">⬢</span>
     <span class="title">AD Learning Atlas</span>
-    <span class="subtitle">自动驾驶学习地图 · ML · RL · VLA · v1</span>
+    <span class="subtitle">从数学直觉到自动驾驶前沿 · ML · RL · VLA</span>
   </div>
   <nav class="topbar-actions">
-    <input id="search" type="search" placeholder="搜索 (按 / 聚焦)…" autocomplete="off" />
+    <input id="search" type="search" placeholder="搜索论文、概念或路径（按 /）…" autocomplete="off" />
     <select id="layout">
-      <option value="fcose">布局：力导向 (cose)</option>
-      <option value="topic">布局：按主题分簇</option>
-      <option value="phase">布局：按阶段分层</option>
-      <option value="timeline">布局：按年份时间轴</option>
+      <option value="cose">自由探索：让关系自己拉开</option>
+      <option value="topic">按主题分组：先看版图</option>
+      <option value="phase">按学习阶段：从基础到前沿</option>
+      <option value="timeline">按年份展开：看范式怎样演化</option>
     </select>
-    <button id="compareBtn" title="按住 Shift 点击两个节点进入 compare">⇄ 对比</button>
-    <button id="resetBtn" title="重置视图">⟲ 重置</button>
+    <button id="compareBtn" title="打开对比面板；也可以直接按住 Shift 点击节点">⇄ 对比两篇</button>
+    <button id="resetBtn" title="清空搜索、筛选与时间线">⟲ 回到全图</button>
     <a href="https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas" target="_blank" rel="noopener" class="ghlink" title="GitHub">GitHub ↗</a>
   </nav>
 </header>
 
 <aside class="leftbar" id="leftbar">
-  <h3>Playbook 预设</h3>
+  <h3>按你的背景开始</h3>
   <button class="pb" data-pb="A">Path A · 强化学习从零</button>
   <button class="pb" data-pb="B">Path B · 感知到端到端</button>
   <button class="pb" data-pb="C">Path C · 类脑 / 高效</button>
   <button class="pb" data-pb="D">Path D · LLM·VLM·VLA</button>
   <button class="pb" data-pb="ALL">全部节点</button>
+  <p id="resultCount" class="result-count">—</p>
 
   <h3>主题筛选</h3>
   <div id="topicChips" class="chips"></div>
@@ -78,7 +79,7 @@
     <input id="yearSlider" type="range" min="2011" max="2026" step="1" value="2026" />
     <div class="yearrow"><span id="yearLabel">2026</span><button id="playYears">▶ 播放</button></div>
   </div>
-  <p class="hint">提示：按 <kbd>/</kbd> 聚焦搜索；按 <kbd>Shift</kbd> 点两个节点对比；点击节点打开右侧深度卡片。</p>
+  <p class="hint">可以这样读：先选一条路径，再点击一个节点。卡片会从直觉、公式、工程注意点一路带你读到下一篇。按 <kbd>/</kbd> 搜索；按住 <kbd>Shift</kbd> 点两个节点可直接对比。</p>
 </aside>
 
 <main id="cy"></main>
@@ -99,7 +100,8 @@
 <aside class="comparepane" id="comparepane" aria-hidden="true">
   <header>
     <button id="closeCompare" aria-label="关闭">×</button>
-    <span>⇄ 对比模式（按 Shift 选择两个节点）</span>
+    <span>⇄ 对比模式：选择两个节点，看它们解决问题的方式有什么不同</span>
+    <button id="clearCompare" aria-label="清空对比">清空</button>
   </header>
   <div class="cmpgrid">
     <section id="cmpA" class="cmpcell"><em>选择第一个节点…</em></section>

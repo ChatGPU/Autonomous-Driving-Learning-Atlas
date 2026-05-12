@@ -17,7 +17,11 @@
     activePhases: new Set(),
     activeTiers: new Set(),
     yearMax: 2026,
+    layout: "cose",
+    activeTab: "full",
+    searchQuery: "",
     cardCache: new Map(),
+    resourceCache: new Map(),
     compare: { enabled: false, slots: [null, null] },
   };
 
@@ -48,6 +52,12 @@
   }
   function tierWidth(tier) {
     return STATE.graph.tier_border_width[tier] || 1;
+  }
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "\"": "&quot;" }[c]));
+  }
+  function stripQuotes(s) {
+    return String(s ?? "").trim().replace(/^['"]|['"]$/g, "");
   }
 
   // ---------------------------------------------------------------- graph load
@@ -139,32 +149,11 @@
     return cy;
   }
 
-  function layoutFor(kind) {
-    switch (kind) {
-      case "fcose":
-        return { name: "fcose", quality: "default", nodeRepulsion: 7500, idealEdgeLength: 95,
-                 randomize: true, animate: false, packComponents: true };
-      case "topic": {
-        const topics = Object.keys(STATE.graph.topic_palette);
-        return {
-          name: "preset",
-          positions: () => null, // we'll position manually below
-          stop: () => {}
-        };
-      }
-      case "phase":
-        return { name: "preset" };
-      case "timeline":
-        return { name: "preset" };
-      default:
-        return { name: "fcose", animate: false };
-    }
-  }
-
   function applyLayout(kind) {
     const cy = STATE.cy;
     if (!cy) return;
-    if (kind === "fcose") {
+    STATE.layout = kind;
+    if (kind === "cose" || kind === "fcose") {
       cy.layout({ name: "cose", animate: false, nodeRepulsion: () => 8000, idealEdgeLength: () => 95, gravity: 1.0 }).run();
       return;
     }
@@ -228,58 +217,297 @@
 
   // ---------------------------------------------------------------- right panel
 
-  async function fetchCard(card) {
-    if (STATE.cardCache.has(card)) return STATE.cardCache.get(card);
+  function resolveCardPath(card) {
     const path = card.startsWith("../../../") ? card.replace("../../../", "../") : `data/cards/${card}`;
-    const r = await fetch(path, { cache: "no-cache" });
-    if (!r.ok) return `# 卡片缺失\n\n找不到：\`${path}\``;
+    const [cleanPath, fragment = ""] = path.split("#");
+    return { path: cleanPath, fragment };
+  }
+
+  async function fetchText(path) {
+    if (STATE.cardCache.has(path)) return STATE.cardCache.get(path);
+    let r = await fetch(path, { cache: "no-cache" });
+    if (!r.ok && path.startsWith("../")) {
+      const rawPath = path.replace(/^\.\.\//, "");
+      r = await fetch(`https://raw.githubusercontent.com/ChatGPU/Autonomous-Driving-Learning-Atlas/main/${rawPath}`, { cache: "no-cache" });
+    }
+    if (!r.ok) throw new Error(`HTTP ${r.status} while fetching ${path}`);
     const txt = await r.text();
-    STATE.cardCache.set(card, txt);
+    STATE.cardCache.set(path, txt);
     return txt;
+  }
+
+  async function fetchCard(card) {
+    const { path } = resolveCardPath(card);
+    try {
+      return await fetchText(path);
+    } catch (err) {
+      return `# 这张卡片暂时没有加载出来\n\n页面试图读取：\`${path}\`\n\n如果你在本地预览，请确认这个文件存在；如果你在 GitHub Pages 上看到它，欢迎回到仓库提交一个 broken-link issue。`;
+    }
   }
 
   function parseFrontmatter(md) {
     const m = md.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-    if (!m) return { fm: {}, body: md };
-    const fm = {};
-    m[1].split("\n").forEach(line => {
+    if (!m) return { fm: {}, body: md, rawFrontmatter: "" };
+    const raw = m[1];
+    const fm = { deep_links: [] };
+    const lines = raw.split("\n");
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      if (/^deep_links:\s*$/.test(line)) {
+        i += 1;
+        while (i < lines.length && /^\s+-\s+/.test(lines[i])) {
+          const item = lines[i];
+          const label = item.match(/label:\s*["']([^"']+)["']/);
+          const url = item.match(/url:\s*["']([^"']+)["']/);
+          if (label && url) fm.deep_links.push({ label: label[1], url: url[1] });
+          i += 1;
+        }
+        i -= 1;
+        continue;
+      }
+      if (/^bibtex:\s*\|/.test(line)) {
+        const bib = [];
+        i += 1;
+        while (i < lines.length && (/^\s+/.test(lines[i]) || lines[i] === "")) {
+          bib.push(lines[i].replace(/^  /, ""));
+          i += 1;
+        }
+        fm.bibtex = bib.join("\n").trim();
+        i -= 1;
+        continue;
+      }
       const mm = line.match(/^([a-zA-Z_]+):\s*(.*)$/);
-      if (mm) fm[mm[1]] = mm[2].trim();
+      if (mm) fm[mm[1]] = stripQuotes(mm[2]);
+    }
+    return { fm, body: m[2], rawFrontmatter: raw };
+  }
+
+  function normalizeAnchor(s) {
+    return decodeURIComponent(String(s || ""))
+      .toLowerCase()
+      .replace(/[`~!@#$%^&*()+=[\]{}|\\:;"'，。、《》？：；“”‘’！,.<>/?]/g, "")
+      .replace(/[\s_-]+/g, "");
+  }
+
+  function extractMarkdownSection(md, fragment) {
+    if (!fragment) return md;
+    const target = normalizeAnchor(fragment);
+    const lines = md.split("\n");
+    let start = -1;
+    let level = 99;
+    for (let i = 0; i < lines.length; i += 1) {
+      const m = lines[i].match(/^(#{1,6})\s+(.+?)\s*#*$/);
+      if (!m) continue;
+      const heading = normalizeAnchor(m[2]);
+      if (heading === target || heading.includes(target) || target.includes(heading)) {
+        start = i;
+        level = m[1].length;
+        break;
+      }
+    }
+    if (start < 0) {
+      return `## 没有找到这个概念的小节\n\n页面想打开锚点 \`${fragment}\`，但概念表里没有完全匹配的标题。你仍然可以打开完整的 [概念地图](https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas/blob/main/concepts.md)。`;
+    }
+    let end = lines.length;
+    for (let i = start + 1; i < lines.length; i += 1) {
+      const m = lines[i].match(/^(#{1,6})\s+/);
+      if (m && m[1].length <= level) {
+        end = i;
+        break;
+      }
+    }
+    return lines.slice(start, end).join("\n");
+  }
+
+  function sourceToText(src) {
+    return Array.isArray(src) ? src.join("") : String(src || "");
+  }
+
+  function renderNotebookSummary(ipynbText, node, path) {
+    let nb;
+    try {
+      nb = JSON.parse(ipynbText);
+    } catch (_err) {
+      return `## ${node.data("_label")}\n\n这个 lab notebook 暂时无法解析为 JSON。你可以直接在 GitHub 上打开它：\n\n- [查看 notebook](https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas/blob/main/${path.replace("../", "")})`;
+    }
+    const markdownCells = (nb.cells || []).filter(c => c.cell_type === "markdown").map(c => sourceToText(c.source));
+    const first = markdownCells[0] || `# ${node.data("_label")}`;
+    const title = (first.match(/^#\s+(.+)$/m) || [null, node.data("_label")])[1];
+    const what = (first.match(/\*\*What this proves\*\*[:：]\s*([\s\S]*?)(?:\n\n|$)/) || [null, "这个实验把图谱里的抽象概念压成一个可以运行、可以改动、可以观察结果的最小系统。"])[1].trim();
+    const stretch = markdownCells.find(c => /stretch goals|stretch goal|延伸目标/i.test(c)) || "";
+    const rel = path.replace("../", "");
+    return `## ${title}\n\n> **这个实验想证明什么？** ${what}\n\n### 怎么使用\n\n1. 先读上方对应论文卡片，抓住它想解决的问题；\n2. 再运行 notebook，看同一个想法在最小代码里怎样出现；\n3. 最后改一个参数或场景，让结果发生可解释的变化。\n\n- [在 GitHub 查看 notebook](https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas/blob/main/${rel})\n- [在 Colab 打开](https://colab.research.google.com/github/ChatGPU/Autonomous-Driving-Learning-Atlas/blob/main/${rel})\n\n${stretch ? `### 可以继续挑战\n\n${stretch.replace(/^###\s*/, "")}` : ""}`;
+  }
+
+  async function loadNodeResource(node) {
+    const data = node.data();
+    const cacheKey = `${node.id()}::${data.card}`;
+    if (STATE.resourceCache.has(cacheKey)) return STATE.resourceCache.get(cacheKey);
+    const { path, fragment } = resolveCardPath(data.card);
+    let resource;
+    try {
+      const txt = await fetchText(path);
+      if (data.kind === "concept") {
+        resource = {
+          type: "concept",
+          path,
+          body: extractMarkdownSection(txt, fragment),
+          fm: { deep_links: [{ label: "完整概念地图", url: "https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas/blob/main/concepts.md" + (fragment ? `#${fragment}` : "") }] },
+        };
+      } else if (data.kind === "lab") {
+        const body = renderNotebookSummary(txt, node, path);
+        const rel = path.replace("../", "");
+        resource = {
+          type: "lab",
+          path,
+          body,
+          fm: {
+            deep_links: [
+              { label: "GitHub notebook", url: `https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas/blob/main/${rel}` },
+              { label: "Open in Colab", url: `https://colab.research.google.com/github/ChatGPU/Autonomous-Driving-Learning-Atlas/blob/main/${rel}` },
+            ],
+          },
+        };
+      } else {
+        resource = { type: "markdown", path, ...parseFrontmatter(txt) };
+      }
+    } catch (err) {
+      resource = {
+        type: "error",
+        path,
+        fm: { deep_links: [] },
+        body: `## 这张卡片暂时没有加载出来\n\n页面试图读取：\`${path}\`。\n\n错误信息：\`${escapeHtml(err.message)}\``,
+      };
+    }
+    STATE.resourceCache.set(cacheKey, resource);
+    return resource;
+  }
+
+  function renderMeta(data, fm = {}) {
+    const tier = (data.tier || fm.tier || "").replace(/['"]/g, "");
+    return `
+      <div class="meta">
+        <span class="badge ${tier}">${escapeHtml(tier)}</span>
+        <span class="badge">${escapeHtml(data.kind)}</span>
+        <span class="badge">${escapeHtml(data.topic)}</span>
+        <span class="badge">${escapeHtml(data.phase)}</span>
+        ${data.year ? `<span class="badge">${data.year}</span>` : ""}
+      </div>`;
+  }
+
+  function renderMarkdown(root, md) {
+    root.innerHTML = DOMPurify.sanitize(marked.parse(md, { breaks: false }));
+    rewriteCardLinks(root);
+    if (window.renderMathInElement) {
+      renderMathInElement(root, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$",  right: "$",  display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+  }
+
+  function collectMarkdownLinks(body) {
+    return [...String(body || "").matchAll(/\[([^\]]+)\]\((https?:[^\)\s]+)\)/g)]
+      .map(m => ({ label: m[1], url: m[2] }));
+  }
+
+  function uniqueLinks(links) {
+    const seen = new Set();
+    return links.filter(l => {
+      if (!l.url || seen.has(l.url)) return false;
+      seen.add(l.url);
+      return true;
     });
-    return { fm, body: m[2] };
+  }
+
+  function renderLinksTab(node, resource) {
+    const links = uniqueLinks([...(resource.fm.deep_links || []), ...collectMarkdownLinks(resource.body)]);
+    const items = links.map(l => `<li><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.label || l.url)}</a></li>`).join("");
+    $("#cardBody").innerHTML = `<h2>深度链接 / Deep links</h2><p class="soft">这里收集的是这张卡最值得直接打开的位置：论文页码、视频时间戳、代码仓库或配套 notebook。</p><ul>${items || "<li><em>这张卡暂时没有外部深度链接。</em></li>"}</ul>`;
+  }
+
+  function renderBibtexTab(resource) {
+    const bib = (resource.fm && resource.fm.bibtex) ? resource.fm.bibtex.trim() : "";
+    if (!bib) {
+      $("#cardBody").innerHTML = "<h2>BibTeX</h2><p class=\"soft\">这类节点通常不是论文，因此没有 BibTeX。需要引用时，可以直接引用页面中给出的原始资源链接。</p>";
+      return;
+    }
+    $("#cardBody").innerHTML = `
+      <h2>BibTeX <button class="copybtn" id="copyBib">复制</button></h2>
+      <pre><code>${escapeHtml(bib)}</code></pre>`;
+    $("#copyBib").onclick = () => navigator.clipboard.writeText(bib);
+  }
+
+  function renderResourceTab(node, resource, tab) {
+    const data = node.data();
+    $$(".rightbar .tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+    if (tab === "links") {
+      renderLinksTab(node, resource);
+      return;
+    }
+    if (tab === "bibtex") {
+      renderBibtexTab(resource);
+      return;
+    }
+    const root = $("#cardBody");
+    root.innerHTML = renderMeta(data, resource.fm) + DOMPurify.sanitize(marked.parse(resource.body, { breaks: false }));
+    rewriteCardLinks(root);
+    if (window.renderMathInElement) {
+      renderMathInElement(root, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$",  right: "$",  display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+  }
+
+  async function renderSelectedCard(node, tab = STATE.activeTab || "full") {
+    const safeTab = ["full", "links", "bibtex"].includes(tab) ? tab : "full";
+    STATE.selected = node.id();
+    STATE.activeTab = safeTab;
+    $("#cardTitle").textContent = node.data("_label");
+    $("#rightbar").classList.add("open");
+    $("#rightbar").setAttribute("aria-hidden", "false");
+    $("#cardBody").innerHTML = "<p class=\"soft loading\">正在整理这张卡片…</p>";
+    $$(".rightbar .tab").forEach(t => t.classList.toggle("active", t.dataset.tab === safeTab));
+    syncPermalink();
+    const resource = await loadNodeResource(node);
+    if (STATE.selected !== node.id()) return;
+    renderResourceTab(node, resource, safeTab);
+    syncPermalink();
   }
 
   async function renderCard(node) {
-    const data = node.data();
-    const md = await fetchCard(data.card);
-    const { fm, body } = parseFrontmatter(md);
-    const tier = (data.tier || fm.tier || "").replace(/['"]/g, "");
-    const meta = `
-      <div class="meta">
-        <span class="badge ${tier}">${tier}</span>
-        <span class="badge">${data.kind}</span>
-        <span class="badge">${data.topic}</span>
-        <span class="badge">${data.phase}</span>
-        ${data.year ? `<span class="badge">${data.year}</span>` : ""}
-      </div>`;
-    const html = DOMPurify.sanitize(marked.parse(body, { breaks: false }));
-    $("#cardTitle").textContent = data._label;
-    $("#cardBody").innerHTML = meta + html;
-    // re-route in-card markdown links into the SPA
-    rewriteCardLinks($("#cardBody"));
-    renderMathInElement($("#cardBody"), {
-      delimiters: [
-        { left: "$$", right: "$$", display: true },
-        { left: "$",  right: "$",  display: false },
-      ],
-      throwOnError: false,
-    });
-    showTab("full");
-    $("#rightbar").classList.add("open");
-    $("#rightbar").setAttribute("aria-hidden", "false");
-    STATE.selected = node.id();
-    syncPermalink();
+    return renderSelectedCard(node, "full");
   }
+
+  async function renderNodePreview(node) {
+    const resource = await loadNodeResource(node);
+    const data = node.data();
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `<h3>${escapeHtml(data.label_zh || data.label)}</h3>${renderMeta(data, resource.fm)}${DOMPurify.sanitize(marked.parse(resource.body, { breaks: false }))}`;
+    rewriteCardLinks(wrap);
+    if (window.renderMathInElement) {
+      renderMathInElement(wrap, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$",  right: "$",  display: false },
+        ],
+        throwOnError: false,
+      });
+    }
+    return wrap.innerHTML;
+  }
+
+  window.AtlasCards = {
+    renderSelectedCard,
+    renderNodePreview,
+  };
 
   // ---------------------------------------------------------------- in-card link rewrite
 
@@ -328,7 +556,7 @@
           const node = STATE.cy.$id(targetId);
           if (node && !node.empty()) {
             STATE.cy.center(node);
-            renderCard(node);
+            renderSelectedCard(node, "full");
           }
         };
         return;
@@ -341,43 +569,20 @@
   }
 
   function showTab(name) {
-    $$(".rightbar .tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+    const safeTab = ["full", "links", "bibtex"].includes(name) ? name : "full";
+    STATE.activeTab = safeTab;
+    $$(".rightbar .tab").forEach(t => t.classList.toggle("active", t.dataset.tab === safeTab));
     if (!STATE.selected) return;
     const node = STATE.cy.$id(STATE.selected);
     if (!node || node.empty()) return;
-
-    if (name === "full") {
-      // re-render full body
-      renderCard(node);
-      return;
-    }
-    if (name === "links") {
-      fetchCard(node.data("card")).then(md => {
-        const { body } = parseFrontmatter(md);
-        // crude extraction: lines containing http(s)://
-        const links = [...body.matchAll(/\[([^\]]+)\]\((https?:[^\)]+)\)/g)]
-          .map(m => `<li><a href="${m[2]}" target="_blank" rel="noopener">${m[1]}</a></li>`).join("");
-        const fm = parseFrontmatter(md).fm;
-        $("#cardBody").innerHTML = `<h2>深度链接 / Deep links</h2><ul>${links || "<li><em>本卡片暂无外链</em></li>"}</ul>`;
-      });
-      return;
-    }
-    if (name === "bibtex") {
-      fetchCard(node.data("card")).then(md => {
-        const m = md.match(/bibtex:\s*\|\s*([\s\S]*?)(?=\n[a-z_]+:|\n---)/);
-        const bib = m ? m[1].trim() : "(no bibtex provided)";
-        $("#cardBody").innerHTML = `
-          <h2>BibTeX <button class="copybtn" id="copyBib">复制</button></h2>
-          <pre><code>${bib.replace(/[<>&]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c]))}</code></pre>`;
-        $("#copyBib").onclick = () => navigator.clipboard.writeText(bib);
-      });
-    }
+    renderSelectedCard(node, safeTab);
   }
 
   function closeRight() {
     $("#rightbar").classList.remove("open");
     $("#rightbar").setAttribute("aria-hidden", "true");
     STATE.selected = null;
+    STATE.activeTab = "full";
     syncPermalink();
   }
 
@@ -385,6 +590,9 @@
     const p = {};
     if (STATE.selected) p.node = STATE.selected;
     if (STATE.playbook && STATE.playbook !== "ALL") p.playbook = STATE.playbook;
+    if (STATE.activeTab && STATE.activeTab !== "full") p.tab = STATE.activeTab;
+    if (STATE.layout && STATE.layout !== "cose") p.layout = STATE.layout;
+    if (STATE.yearMax && STATE.yearMax !== 2026) p.year = STATE.yearMax;
     setUrlParams(p);
   }
 
@@ -393,7 +601,7 @@
   function onNodeTap(evt) {
     const n = evt.target;
     if (window.AtlasCompare && window.AtlasCompare.handleSelect(evt.originalEvent, n)) return;
-    renderCard(n);
+    renderSelectedCard(n, "full");
   }
 
   // ---------------------------------------------------------------- filters
@@ -410,6 +618,8 @@
       const pb = STATE.graph.playbooks[STATE.playbook];
       if (pb) pbSet = new Set(pb.nodes);
     }
+    const q = STATE.searchQuery;
+    let visibleCount = 0;
     cy.batch(() => {
       cy.nodes().forEach(n => {
         const y = n.data("year") || 2000;
@@ -418,7 +628,17 @@
         const okTopic = !topicsActive || STATE.activeTopics.has(n.data("topic"));
         const okTier = !tiersActive || STATE.activeTiers.has(n.data("tier"));
         const okPb = !pbSet || pbSet.has(n.id());
-        const visible = okYear && okPhase && okTopic && okTier && okPb;
+        const searchable = [
+          n.data("_label"),
+          n.data("label"),
+          n.id(),
+          n.data("topic"),
+          n.data("tier"),
+          n.data("phase"),
+        ].join(" ").toLowerCase();
+        const okSearch = !q || searchable.includes(q);
+        const visible = okYear && okPhase && okTopic && okTier && okPb && okSearch;
+        if (visible) visibleCount += 1;
         n.toggleClass("dim", !visible);
       });
       cy.edges().forEach(e => {
@@ -426,6 +646,8 @@
         e.toggleClass("dim", dim);
       });
     });
+    const countEl = $("#resultCount");
+    if (countEl) countEl.textContent = `${visibleCount} / ${cy.nodes().length} 个节点可见`;
   }
 
   function buildTopicChips() {
@@ -488,21 +710,9 @@
   function bindTopbar() {
     const search = $("#search");
     search.addEventListener("input", debounce(() => {
-      const q = search.value.trim().toLowerCase();
-      const cy = STATE.cy;
-      cy.batch(() => {
-        cy.nodes().forEach(n => {
-          const lab = (n.data("_label") || "").toLowerCase();
-          const lab2 = (n.data("label") || "").toLowerCase();
-          const id = (n.id() || "").toLowerCase();
-          const hit = !q || lab.includes(q) || lab2.includes(q) || id.includes(q);
-          n.toggleClass("dim", !hit);
-        });
-        cy.edges().forEach(e => {
-          const dim = e.source().hasClass("dim") || e.target().hasClass("dim");
-          e.toggleClass("dim", dim);
-        });
-      });
+      STATE.searchQuery = search.value.trim().toLowerCase();
+      applyFilters();
+      syncPermalink();
     }, 150));
 
     document.addEventListener("keydown", e => {
@@ -514,14 +724,16 @@
       }
     });
 
-    $("#layout").onchange = e => applyLayout(e.target.value);
+    $("#layout").onchange = e => { applyLayout(e.target.value); syncPermalink(); };
     $("#resetBtn").onclick = () => {
       STATE.activeTopics.clear(); STATE.activePhases.clear(); STATE.activeTiers.clear();
       $$(".chip").forEach(c => c.classList.remove("active"));
       STATE.playbook = null;
       $$(".pb").forEach(c => c.classList.remove("active"));
       search.value = "";
+      STATE.searchQuery = "";
       STATE.yearMax = 2026; $("#yearSlider").value = 2026; $("#yearLabel").textContent = "2026";
+      $("#layout").value = "cose"; applyLayout("cose");
       applyFilters();
       STATE.cy.fit(undefined, 40);
       syncPermalink();
@@ -530,6 +742,8 @@
     $$(".rightbar .tab").forEach(t => t.onclick = () => showTab(t.dataset.tab));
     $("#compareBtn").onclick = () => window.AtlasCompare && window.AtlasCompare.toggle();
     $("#closeCompare").onclick = () => window.AtlasCompare && window.AtlasCompare.disable();
+    const clearCompare = $("#clearCompare");
+    if (clearCompare) clearCompare.onclick = () => window.AtlasCompare && window.AtlasCompare.clear();
   }
 
   function bindTimeline() {
@@ -538,12 +752,25 @@
       STATE.yearMax = Number(slider.value);
       $("#yearLabel").textContent = STATE.yearMax;
       applyFilters();
+      syncPermalink();
     };
     if (window.AtlasTimeline) window.AtlasTimeline.bindPlay($("#playYears"), slider, () => $("#yearLabel"));
   }
 
   function applyPermalink() {
     const p = urlParams();
+    const year = Number(p.get("year"));
+    if (year) {
+      STATE.yearMax = year;
+      $("#yearSlider").value = year;
+      $("#yearLabel").textContent = String(year);
+      applyFilters();
+    }
+    const layout = p.get("layout");
+    if (layout && $("#layout").querySelector(`option[value="${CSS.escape(layout)}"]`)) {
+      $("#layout").value = layout;
+      applyLayout(layout);
+    }
     const pb = p.get("playbook");
     if (pb && STATE.graph.playbooks[pb]) {
       const btn = document.querySelector(`.pb[data-pb="${pb}"]`);
@@ -554,7 +781,7 @@
       const n = STATE.cy.$id(node);
       if (n && !n.empty()) {
         STATE.cy.center(n); STATE.cy.zoom({ level: 1.3, position: n.position() });
-        renderCard(n);
+        renderSelectedCard(n, p.get("tab") || "full");
       }
     }
   }
@@ -562,15 +789,20 @@
   // ---------------------------------------------------------------- bootstrap
 
   document.addEventListener("DOMContentLoaded", async () => {
-    const g = await loadGraph();
-    STATE.cy = buildCy(buildElements(g));
-    buildTopicChips();
-    bindChips();
-    bindPlaybooks();
-    bindTopbar();
-    bindTimeline();
-    applyLayout("fcose");
-    setTimeout(applyPermalink, 100); // wait for layout settle
-    window.STATE = STATE; // expose for compare.js
+    try {
+      const g = await loadGraph();
+      STATE.cy = buildCy(buildElements(g));
+      buildTopicChips();
+      bindChips();
+      bindPlaybooks();
+      bindTopbar();
+      bindTimeline();
+      applyLayout("cose");
+      applyFilters();
+      setTimeout(applyPermalink, 100); // wait for layout settle
+      window.STATE = STATE; // expose for compare.js
+    } catch (err) {
+      $("#cy").innerHTML = `<div class="load-error"><h2>图谱暂时没有加载出来</h2><p>请检查 <code>docs/data/graph.json</code> 是否可访问。</p><pre>${escapeHtml(err.message)}</pre></div>`;
+    }
   });
 })();

@@ -21,7 +21,7 @@ deep_links:
   - {label: "Essence of Calculus", url: "https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr"}
   - {label: "Neural networks 系列", url: "https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi"}
   - {label: "Backpropagation calculus（最贴 ML 的一集）", url: "https://www.youtube.com/watch?v=tIeHLnjs5U8"}
-  - {label: "But what is a GPT? / Transformers visualised（必看）", url: "https://www.youtube.com/watch?v=wjZofJX0v4M"}
+  - {label: "But what is a GPT? / Transformers visualised（推荐先看）", url: "https://www.youtube.com/watch?v=wjZofJX0v4M"}
   - {label: "Attention in transformers", url: "https://www.youtube.com/watch?v=eMlx5fFNoYc"}
 bibtex: |
   @misc{sanderson3blue1brown,

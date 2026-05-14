@@ -4,6 +4,8 @@
 > **预计时长**：~22 小时。
 > **完成后你能**：从 ViT/DETR 一路推到 UniAD/PlanT/DriveVLM/CF-VLA，并懂得在 *modular ↔ end-to-end × data-driven ↔ knowledge-driven* 二维地图上为新论文定位。
 
+如果你已经熟悉 detection、segmentation 或 BEV perception，这条路会帮你把视角从“看见什么”移到“看见之后怎样开”。最重要的线索是 query：它先在 DETR 里找物体，后来在 BEVFormer / UniAD 里变成对道路世界的可微提问，最后又被 VLM / VLA 路线接到语言推理上。
+
 ## 推荐顺序
 
 | # | 节点 | 内容 / 重点 | 估时 |
@@ -19,7 +21,7 @@
 | 9 | **配套实验** | [`lab03`](../labs/lab03_uniad_query_intuition.ipynb) UniAD query → [`lab04`](../labs/lab04_plant_object_level_planner.ipynb) PlanT → [`lab05`](../labs/lab05_dinov3_features_minidata.ipynb) DINOv3 → [`lab09`](../labs/lab09_drivevlm_dual_pipeline.ipynb) DriveVLM-Dual → [`lab10`](../labs/lab10_cfvla_counterfactual_replanner.ipynb) CF-VLA | 4 h |
 | 10 | [AD benchmarks](../docs/data/cards/benchmarks_ad.md) | nuScenes / CARLA / NAVSIM / Bench2Drive 的差异 —— *指标不能跨基准比* | 30 min |
 
-## 完成时的检查问题
+## 读完后的自检问题
 
 1. 在 2×2 地图（modular↔E2E × data↔knowledge）上画出 UniAD、PlanT、DriveVLM、Agent-Driver、CF-VLA 的位置，并解释为什么。
 2. UniAD 的 5 路 query 与 DETR 的 N 个 object query 是同一种东西吗？相同 / 不同各在哪里？

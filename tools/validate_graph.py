@@ -12,6 +12,8 @@ Invariants enforced:
 5. Every playbook references only existing node ids.
 6. Topic taxonomy and tier are from the controlled vocabulary.
 7. Edge relation is from the controlled vocabulary.
+8. Every paper card includes a Bitter-Lesson lens.
+9. Reader-facing cards avoid internal compression placeholders.
 
 Exit code 0 on success, 1 on failure. Prints a colorless summary.
 """
@@ -35,6 +37,12 @@ ALLOWED_TIERS = {"spine", "S", "A", "B", "concept", "lab"}
 ALLOWED_RELS = {"prereq", "covers", "extends", "parallel", "contrasts", "feeds", "implements"}
 ALLOWED_KINDS = {"paper", "channel", "course", "essay", "concept", "lab"}
 ALLOWED_PHASES = {"prereq", "core", "frontier"}
+CONTENT_ARTIFACTS = {
+    "stub": "reader-facing card still says 'stub'",
+    "TL;DR（3 行）": "reader-facing card still exposes a line-count cue",
+    "无废话": "reader-facing card still uses internal compression wording",
+    "2–3 行核心论点": "template still uses internal compression wording",
+}
 
 
 def fail(msg: str, errors: list[str]) -> None:
@@ -86,6 +94,20 @@ def main() -> int:
             cpath = CARDS_DIR / card
             if not cpath.exists():
                 fail(f"node {nid!r} card file missing: docs/data/cards/{card}", errors)
+            else:
+                text = cpath.read_text(encoding="utf-8")
+                if n.get("kind") == "paper" and "Bitter-Lesson" not in text and "Bitter Lesson" not in text:
+                    fail(f"paper card {card!r} is missing a Bitter-Lesson lens section", errors)
+                for needle, reason in CONTENT_ARTIFACTS.items():
+                    if needle in text:
+                        fail(f"card {card!r}: {reason} ({needle!r})", errors)
+
+    template = CARDS_DIR / "_template.md"
+    if template.exists():
+        template_text = template.read_text(encoding="utf-8")
+        for needle, reason in CONTENT_ARTIFACTS.items():
+            if needle in template_text:
+                fail(f"card template: {reason} ({needle!r})", errors)
 
     out_count: dict[str, int] = {nid: 0 for nid in id_set}
     for e in edges:
@@ -126,6 +148,8 @@ def main() -> int:
     print("    - no isolated resource nodes")
     print("    - all edge endpoints + playbook nodes valid")
     print("    - controlled vocab respected (kind/tier/topic/phase/rel)")
+    print("    - paper cards include Bitter-Lesson lenses")
+    print("    - no internal compression placeholders in card prose")
     return 0
 
 

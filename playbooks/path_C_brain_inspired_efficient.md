@@ -4,6 +4,8 @@
 > **预计时长**：~10 小时。
 > **完成后你能**：在 *能耗 vs 能力* 这条曲线上判断每篇 AD 工作的位置，并理解 Bitter Lesson 在端侧场景的修正版本。
 
+这条路最好带着一个物理问题来读：如果车上算力、散热和功耗都有上限，Bitter Lesson 里的“更多计算”到底还能怎样成立？Spike-driven Transformer、Mamba、DINOv3 并不是同一类方法，但它们共同逼你把“模型能力”放到“单位能耗能做多少事”的坐标系里重新理解。
+
 ## 推荐顺序
 
 | # | 节点 | 重点 | 估时 |
@@ -16,7 +18,7 @@
 | 6 | [Mamba](../docs/data/cards/paper_mamba.md) | 另一种"线性复杂度 + 通用学习"的折中尝试。 | 30 min |
 | 7 | **配套实验** | [`lab06`](../labs/lab06_spike_driven_attention_mnist.ipynb) — SDSA 与 vanilla attention 的乘法计数对比 | 1 h |
 
-## 完成时的检查问题
+## 读完后的自检问题
 
 1. 写出 SDSA 的 mask-and-add 公式，并和 scaled-dot-product attention 在每一步逐个对照。
 2. 解释为何残差连接需要在脉冲驱动 transformer 中"移到激活之前"。

@@ -87,7 +87,7 @@ $$
 ## 深度阅读路径 / Deep-anchored reading order
 1. **PDF p.1 摘要最后一句**——"deployed on a production vehicle"，记住这是 DriveVLM 区别于纯学术 VLM-AD 的杀手锏。
 2. **PDF p.3 Fig.2**——双系统结构。理解箭头方向：VLM 的输出**只是 fast planner 的修正信号**，不直接控车。
-3. **PDF p.4 §3.1–3.3**——三步 CoT 的具体 prompt 模板（重要！直接可抄做工程模板）。
+3. **PDF p.4 §3.1–3.3**——三步 CoT 的具体 prompt 模板；适合作为自己搭原型时的参考脚手架。
 4. **PDF p.7 §4.3 SUP-AD**——长尾场景定义；理解 VLM 路线为何在长尾上才有显著增益。
 5. **PDF p.9 表 2 + 表 4**——*nuScenes 与 SUP-AD 上的对比*；SUP-AD 上 +30% 是这条路线立足的核心证据。
 

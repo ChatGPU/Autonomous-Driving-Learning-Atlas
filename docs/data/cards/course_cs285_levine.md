@@ -72,7 +72,7 @@ $$
 - 时长：完整 ~25 节，每节 1.5h；建议先精看 Lec 1–11，其他按需。
 
 ## 深度阅读路径 / Deep-anchored reading order
-1. **Lec 1**——必看；用来与 [Bitter Lesson](essay_bitter_lesson.md) 对照。
+1. **Lec 1**——先看课程如何定义 deep RL 的问题版图，再与 [Bitter Lesson](essay_bitter_lesson.md) 对照。
 2. **Lec 2 Imitation**——核心；本图谱 [lab02](../../../labs/lab02_cs285_bc_vs_dagger_minicar.ipynb) 直接复刻"BC 失败 / DAgger 修好"。
 3. **Lec 4–5 PG / AC**——配赵世钰 Lec 8/10 一起读。
 4. **Lec 6–8 Q-learning**——配 [DQN 论文](paper_mnih2015_dqn.md)。

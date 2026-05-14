@@ -1,7 +1,7 @@
 ---
 id: channel:ez_encoder_academy
 title: "EZ.Encoder Academy"
-title_zh: "EZ.Encoder Academy：AI 学术与职业的"压缩-解码"中文频道"
+title_zh: "EZ.Encoder Academy：AI 学术与职业的中文解读频道"
 kind: channel
 tier: spine
 authors: ["EZ.Encoder Academy"]

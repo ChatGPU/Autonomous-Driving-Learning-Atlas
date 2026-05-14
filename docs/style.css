@@ -48,6 +48,7 @@ kbd { background:var(--kbd); border-radius:4px; padding:1px 6px; font-size:.85em
 .topbar-actions input::placeholder { color: var(--text-dim); }
 .topbar-actions button:hover, .topbar-actions select:hover { background: var(--panel-2); }
 .ghlink { padding: 6px 10px; border:1px solid var(--line); border-radius: var(--r); }
+.menu-toggle { display: none; }
 
 /* leftbar ---------------------------------------------------------- */
 .leftbar {
@@ -89,12 +90,36 @@ kbd { background:var(--kbd); border-radius:4px; padding:1px 6px; font-size:.85em
 .yearrow button { padding: 2px 8px; font-size: 12px; background: var(--panel-2); border:1px solid var(--line); color: var(--text); border-radius: 4px; cursor: pointer; }
 
 .hint { font-size: 11.5px; color: var(--text-dim); margin-top: 18px; line-height: 1.6; }
+.result-count { margin: 8px 4px 2px; font-size: 12px; color: var(--text-dim); }
+.playbook-note { margin: 6px 4px 14px; padding: 8px 10px; border-left: 3px solid var(--accent);
+  background: rgba(255,138,61,.07); color: #f1d8c2; border-radius: 0 var(--r) var(--r) 0;
+  font-size: 12px; line-height: 1.65; }
 
 /* main canvas ------------------------------------------------------ */
 #cy {
   position: fixed; top: 50px; left: var(--leftw); right: 0; bottom: 0;
   background: radial-gradient(1200px 700px at 60% 30%, #18213f 0%, var(--bg) 80%);
 }
+.load-error { max-width: 560px; margin: 80px auto; padding: 24px;
+  background: rgba(27,36,68,.9); border:1px solid var(--line); border-radius: var(--r);
+  box-shadow: var(--shadow); line-height: 1.7; }
+.load-error h2 { color: var(--accent); margin-top: 0; }
+
+.welcome-card {
+  position: fixed; left: calc(var(--leftw) + 24px); bottom: 24px; z-index: 22;
+  width: min(520px, calc(100vw - var(--leftw) - 48px)); padding: 18px 20px 18px;
+  background: linear-gradient(145deg, rgba(36,48,86,.96), rgba(19,26,48,.96));
+  border: 1px solid rgba(144,202,249,.32); border-radius: 18px; box-shadow: var(--shadow);
+}
+.welcome-card.hidden { display: none; }
+.welcome-card #dismissWelcome {
+  position: absolute; top: 8px; right: 10px; background: transparent; border: 0;
+  color: var(--text-dim); font-size: 20px; cursor: pointer;
+}
+.welcome-card .eyebrow { margin: 0 0 4px; color: var(--link); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.welcome-card h2 { margin: 0 20px 10px 0; color: var(--text); font-size: 18px; line-height: 1.35; }
+.welcome-card ol { margin: 0; padding-left: 20px; color: var(--text-dim); line-height: 1.75; }
+.welcome-card li + li { margin-top: 4px; }
 
 /* rightbar (card detail) ------------------------------------------ */
 .rightbar {
@@ -113,11 +138,15 @@ kbd { background:var(--kbd); border-radius:4px; padding:1px 6px; font-size:.85em
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 #cardBody { padding: 14px 18px 22px; overflow-y: auto; flex: 1; }
+#cardBody .soft { color: var(--text-dim); line-height: 1.75; }
+#cardBody .loading { padding: 10px 0; }
 #cardBody h1, #cardBody h2, #cardBody h3 { color: var(--accent); }
 #cardBody h2 { margin-top: 1.4em; font-size: 16px; }
+#cardBody p, #cardBody li { line-height: 1.75; }
+#cardBody img { max-width: 100%; }
 #cardBody pre { background: #0a0e1d; color: #d6deff; padding: 10px; border-radius: 6px; overflow-x:auto; }
 #cardBody code { background: #20284b; color: #d6deff; padding: 1px 4px; border-radius: 3px; }
-#cardBody table { border-collapse: collapse; }
+#cardBody table { border-collapse: collapse; max-width: 100%; display: block; overflow-x: auto; }
 #cardBody th, #cardBody td { border: 1px solid var(--line); padding: 4px 8px; }
 #cardBody blockquote { border-left: 4px solid var(--accent); margin: 1em 0; padding: 6px 14px;
   background: rgba(255,138,61,.07); color: #f1d8c2; }
@@ -144,8 +173,41 @@ kbd { background:var(--kbd); border-radius:4px; padding:1px 6px; font-size:.85em
 .comparepane header { display:flex; align-items:center; justify-content: space-between;
   padding: 8px 12px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg,#1c2547,#161e3a); }
 .comparepane header button { background:transparent; border:0; color:var(--text-dim); font-size:22px; cursor:pointer; }
+.comparepane header #clearCompare { font-size: 12px; border: 1px solid var(--line); border-radius: 999px;
+  padding: 3px 10px; background: var(--panel); color: var(--text); }
 .cmpgrid { display:grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; overflow: hidden; }
 .cmpcell { padding: 12px 16px; overflow-y: auto; border-right: 1px solid var(--line); }
 .cmpcell:last-child { border-right: 0; }
 .cmpcell em { color: var(--text-dim); }
 .cmpcell h3 { color: var(--accent); margin: 0 0 8px; }
+.cmpcell .soft { color: var(--text-dim); }
+
+@media (max-width: 960px) {
+  :root { --leftw: 260px; --rightw: 470px; }
+  .topbar { height: auto; min-height: 50px; align-items:flex-start; gap: 8px; flex-wrap: wrap; }
+  .brand { min-height: 34px; }
+  .subtitle { display:none; }
+  .topbar-actions { flex: 1 1 100%; justify-content: flex-start; flex-wrap: wrap; }
+  .topbar-actions input { width: min(100%, 280px); }
+  .leftbar, #cy, .rightbar, .comparepane { top: 92px; }
+  .welcome-card { left: calc(var(--leftw) + 16px); width: min(480px, calc(100vw - var(--leftw) - 32px)); }
+}
+
+@media (max-width: 720px) {
+  .menu-toggle { display:inline-block; }
+  .topbar { padding: 8px 10px; }
+  .topbar-actions input, .topbar-actions select { width: 100%; }
+  .leftbar {
+    top: 128px; transform: translateX(-100%); transition: transform .2s ease;
+    width: min(88vw, 310px); box-shadow: var(--shadow);
+  }
+  .leftbar.open { transform: translateX(0); }
+  #cy { top: 128px; left: 0; }
+  .rightbar { top: 128px; width: 100vw; max-width: 100vw; }
+  .comparepane { top: 128px; width: 96vw; max-height: calc(100vh - 140px); }
+  .cmpgrid { grid-template-columns: 1fr; }
+  .cmpcell { border-right: 0; border-bottom: 1px solid var(--line); }
+  .welcome-card {
+    left: 12px; right: 12px; bottom: 12px; width: auto; max-height: 45vh; overflow-y: auto;
+  }
+}

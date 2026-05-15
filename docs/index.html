@@ -8,6 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e293b'/%3E%3Ccircle cx='20' cy='20' r='6' fill='%23ef6c00'/%3E%3Ccircle cx='44' cy='20' r='6' fill='%232e7d32'/%3E%3Ccircle cx='32' cy='44' r='6' fill='%23c62828'/%3E%3Cpath d='M20 20 L44 20 L32 44 Z' stroke='%23cbd5e1' stroke-width='2' fill='none'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" />
 <link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="debug-fixes.css" />
 <script defer src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.0/dist/cytoscape.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/marked@13.0.2/marked.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
@@ -16,6 +17,7 @@
 <script defer src="timeline.js"></script>
 <script defer src="compare.js"></script>
 <script defer src="app.js"></script>
+<script defer src="debug-fixes.js"></script>
 </head>
 <body>
 <header class="topbar">
@@ -35,6 +37,7 @@
     </select>
     <button id="compareBtn" title="打开对比面板；也可以直接按住 Shift 点击节点">⇄ 对比两篇</button>
     <button id="resetBtn" title="清空搜索、筛选与时间线">⟲ 回到全图</button>
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="切换深色或浅色模式">☀ 浅色</button>
     <a href="https://github.com/ChatGPU/Autonomous-Driving-Learning-Atlas" target="_blank" rel="noopener" class="ghlink" title="GitHub">GitHub ↗</a>
   </nav>
 </header>

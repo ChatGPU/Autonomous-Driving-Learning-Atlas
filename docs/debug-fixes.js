@@ -3,14 +3,14 @@
   "use strict";
 
   const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const STORAGE_KEY = "atlas-theme";
-  const IGNORE_MATH_SELECTOR = "script,style,textarea,input,select,button,pre,code,kbd,samp,.katex,.math-copyable-inline,.math-source-box";
+  const IGNORE_MATH_SELECTOR = "script,style,textarea,input,select,button,pre,code,kbd,samp,.katex,.katex-display,.math-inline,.math-display,.math-fallback,.math-source-box";
   const SELECTION_CLASSES = "selection-dim selection-focus selection-edge selection-root";
 
   let enhancingMath = false;
   let mathTimer = null;
   let selectedId = null;
+  let safeMathShimInstalled = false;
 
   function copyText(text, feedbackEl) {
     const value = String(text || "");
@@ -48,41 +48,89 @@
     window.setTimeout(() => el.classList.remove("copied"), 900);
   }
 
+  function decodeHtmlEntities(s) {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = String(s || "");
+    return txt.value;
+  }
+
+  function normalizeTex(tex) {
+    return decodeHtmlEntities(tex)
+      .replace(/\u00a0/g, " ")
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+      .trim();
+  }
+
+  function unwrapMathDelimiters(text) {
+    const s = normalizeTex(text);
+    if ((s.startsWith("$$") && s.endsWith("$$")) || (s.startsWith("\\[") && s.endsWith("\\]"))) {
+      return s.slice(2, -2).trim();
+    }
+    if ((s.startsWith("$") && s.endsWith("$")) || (s.startsWith("\\(") && s.endsWith("\\)"))) {
+      return s.slice(1, -1).trim();
+    }
+    return s;
+  }
+
   function shouldSkipTextNode(node) {
     const parent = node.parentElement;
     if (!parent) return true;
     return Boolean(parent.closest(IGNORE_MATH_SELECTOR));
   }
 
-  function makeFormulaElement(tex, display, raw) {
+  function renderLatex(holder, tex, display) {
+    const candidates = Array.from(new Set([tex, normalizeTex(tex)])).filter(Boolean);
+    for (const candidate of candidates) {
+      try {
+        if (!window.katex) throw new Error("KaTeX is not loaded");
+        window.katex.render(candidate, holder, {
+          displayMode: display,
+          throwOnError: true,
+          strict: "ignore",
+          trust: false,
+        });
+        return candidate;
+      } catch (_err) {
+        holder.textContent = "";
+      }
+    }
+    return null;
+  }
+
+  function makeFallbackElement(tex, display) {
+    const el = document.createElement(display ? "div" : "span");
+    el.className = display ? "math-fallback math-fallback-display" : "math-fallback";
+    el.textContent = unwrapMathDelimiters(tex);
+    return el;
+  }
+
+  function makeFormulaElement(tex, display) {
     const wrap = document.createElement(display ? "div" : "span");
     const holder = document.createElement(display ? "div" : "span");
-    wrap.className = display ? "math-source-box math-copyable-display" : "math-source-box math-copyable-inline";
-    wrap.dataset.tex = tex;
-    wrap.title = "点击复制 LaTeX 源码";
-    try {
-      if (!window.katex) throw new Error("KaTeX is not loaded");
-      window.katex.render(tex, holder, {
-        displayMode: display,
-        throwOnError: false,
-        strict: "ignore",
-        trust: false,
-      });
-    } catch (_err) {
-      wrap.classList.add("math-render-error");
-      holder.textContent = raw || tex;
-    }
+    wrap.className = display ? "math-source-box math-copyable-display math-display" : "math-inline";
+    const renderedTex = renderLatex(holder, tex, display);
+    if (!renderedTex) return makeFallbackElement(tex, display);
+    wrap.dataset.tex = renderedTex;
     wrap.appendChild(holder);
     if (display) {
+      wrap.title = "点击复制 LaTeX 源码";
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "math-copy-btn";
       btn.textContent = "复制公式";
       btn.setAttribute("aria-label", "复制 LaTeX 公式源码");
-      btn.onclick = e => { e.stopPropagation(); copyText(tex, btn); };
+      btn.onclick = e => { e.stopPropagation(); copyText(renderedTex, btn); };
       wrap.appendChild(btn);
     }
     return wrap;
+  }
+
+  function isProbablyMath(tex, raw) {
+    const s = normalizeTex(tex);
+    if (!s || /^\s*$/.test(s)) return false;
+    if (/^\d+(?:\.\d{2})?$/.test(s) && raw.startsWith("$")) return false; // avoid prices such as $20$
+    return /\\|[_^{}]|[=<>+\-*/]|\b(alpha|beta|gamma|theta|pi|tau|lambda|softmax|log|max|min|mathbb|mathcal|mathrm|nabla|sum|prod|sqrt|top)\b/i.test(s) || /^[A-Za-z]\w*$/.test(s);
   }
 
   function splitMathText(text) {
@@ -93,20 +141,21 @@
     while ((m = re.exec(text)) !== null) {
       const raw = m[0];
       const before = text[m.index - 1];
+      const after = text[m.index + raw.length];
       if (before === "\\") continue;
       const tex = (m[2] || m[3] || m[4] || m[5] || "").trim();
       const display = raw.startsWith("$$") || raw.startsWith("\\[");
-      if (!tex) continue;
+      if (!display && (!isProbablyMath(tex, raw) || after === "$")) continue;
       if (m.index > last) parts.push({ type: "text", value: text.slice(last, m.index) });
-      parts.push({ type: "math", tex, display, raw });
+      parts.push({ type: "math", tex, display });
       last = m.index + raw.length;
     }
     if (last < text.length) parts.push({ type: "text", value: text.slice(last) });
-    return parts.length > 1 ? parts : null;
+    return parts.some(p => p.type === "math") ? parts : null;
   }
 
   function renderPlainTextMath(root) {
-    if (!window.katex) return;
+    if (!window.katex || !root) return;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         if (shouldSkipTextNode(node)) return NodeFilter.FILTER_REJECT;
@@ -121,16 +170,26 @@
       const frag = document.createDocumentFragment();
       parts.forEach(part => {
         if (part.type === "text") frag.appendChild(document.createTextNode(part.value));
-        else frag.appendChild(makeFormulaElement(part.tex, part.display, part.raw));
+        else frag.appendChild(makeFormulaElement(part.tex, part.display));
       });
       node.parentNode.replaceChild(frag, node);
     });
   }
 
-  function autoRenderMath(root) {
-    if (!window.renderMathInElement) return;
+  function cleanupKatexErrors(root) {
+    if (!root) return;
+    root.querySelectorAll(".katex-error").forEach(errEl => {
+      const raw = errEl.textContent || errEl.getAttribute("title") || "";
+      const display = Boolean(errEl.closest(".katex-display"));
+      errEl.replaceWith(makeFallbackElement(raw, display));
+    });
+  }
+
+  function safeRenderMathInElement(root, options = {}) {
+    if (!root || !window.__atlasOriginalRenderMathInElement) return;
     try {
-      window.renderMathInElement(root, {
+      window.__atlasOriginalRenderMathInElement(root, {
+        ...options,
         delimiters: [
           { left: "$$", right: "$$", display: true },
           { left: "\\[", right: "\\]", display: true },
@@ -138,44 +197,53 @@
           { left: "$", right: "$", display: false },
         ],
         ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"],
+        ignoredClasses: ["katex", "katex-display", "math-inline", "math-display", "math-fallback", "math-source-box"],
         throwOnError: false,
         strict: "ignore",
         trust: false,
       });
     } catch (_err) {
-      // Fall back to the custom text-node renderer below.
+      // The custom text-node renderer below will still handle remaining formulas.
     }
+    cleanupKatexErrors(root);
+  }
+
+  function installSafeMathShim() {
+    if (safeMathShimInstalled || !window.renderMathInElement) return;
+    window.__atlasOriginalRenderMathInElement = window.renderMathInElement;
+    window.renderMathInElement = safeRenderMathInElement;
+    safeMathShimInstalled = true;
+  }
+
+  function autoRenderMath(root) {
+    if (!window.renderMathInElement) return;
+    safeRenderMathInElement(root);
   }
 
   function extractTex(katexEl) {
-    const annotation = katexEl.querySelector("annotation[encoding='application/x-tex']");
+    const annotation = katexEl && katexEl.querySelector("annotation[encoding='application/x-tex']");
     return annotation ? annotation.textContent.trim() : "";
   }
 
   function attachCopyControls(root) {
+    if (!root) return;
     root.querySelectorAll(".katex").forEach(katexEl => {
       if (katexEl.dataset.copyReady === "1") return;
-      const tex = extractTex(katexEl);
-      if (!tex) return;
-      katexEl.dataset.copyReady = "1";
       const display = katexEl.closest(".katex-display");
-      if (display) {
-        display.classList.add("math-copyable-display");
-        display.dataset.tex = tex;
-        display.title = "点击复制 LaTeX 源码";
-        if (!display.querySelector(":scope > .math-copy-btn")) {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "math-copy-btn";
-          btn.textContent = "复制公式";
-          btn.setAttribute("aria-label", "复制 LaTeX 公式源码");
-          btn.onclick = e => { e.stopPropagation(); copyText(tex, btn); };
-          display.appendChild(btn);
-        }
-      } else {
-        katexEl.classList.add("math-copyable-inline");
-        katexEl.dataset.tex = tex;
-        katexEl.title = "点击复制 LaTeX 源码";
+      const tex = extractTex(katexEl);
+      katexEl.dataset.copyReady = "1";
+      if (!display || !tex) return;
+      display.classList.add("math-copyable-display");
+      display.dataset.tex = tex;
+      display.title = "点击复制 LaTeX 源码";
+      if (!display.querySelector(":scope > .math-copy-btn")) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "math-copy-btn";
+        btn.textContent = "复制公式";
+        btn.setAttribute("aria-label", "复制 LaTeX 公式源码");
+        btn.onclick = e => { e.stopPropagation(); copyText(tex, btn); };
+        display.appendChild(btn);
       }
     });
   }
@@ -183,8 +251,11 @@
   function enhanceMathRoot(root) {
     if (!root || enhancingMath) return;
     enhancingMath = true;
+    installSafeMathShim();
+    cleanupKatexErrors(root);
     autoRenderMath(root);
     renderPlainTextMath(root);
+    cleanupKatexErrors(root);
     attachCopyControls(root);
     enhancingMath = false;
   }
@@ -207,7 +278,7 @@
       observer.observe(el, { childList: true, subtree: true, characterData: true });
     });
     document.addEventListener("click", e => {
-      const target = e.target.closest && e.target.closest(".math-copyable-inline,.math-copyable-display,.math-source-box");
+      const target = e.target.closest && e.target.closest(".math-copyable-display,.math-source-box");
       if (!target || e.target.closest("button")) return;
       const tex = target.dataset.tex || extractTex(target.querySelector(".katex") || target);
       if (tex) {
@@ -343,7 +414,10 @@
     }, 50);
   }
 
+  installSafeMathShim();
+
   document.addEventListener("DOMContentLoaded", () => {
+    installSafeMathShim();
     installThemeToggle();
     bindMathObserver();
     whenAtlasReady(() => {

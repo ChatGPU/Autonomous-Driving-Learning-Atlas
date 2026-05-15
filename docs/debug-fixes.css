@@ -61,6 +61,35 @@
   white-space: nowrap;
 }
 
+.math-inline,
+#cardBody .katex:not(.katex-display .katex),
+.cmpcell .katex:not(.katex-display .katex) {
+  white-space: nowrap;
+  font-size: 1em;
+  cursor: inherit;
+  border: 0;
+  background: transparent;
+}
+
+.math-fallback {
+  font-family: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  white-space: nowrap;
+}
+
+.math-fallback-display {
+  display: block;
+  margin: 1em 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  white-space: pre;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, .10);
+  color: var(--text);
+}
+
 .math-copyable-display,
 .math-source-box.math-copyable-display {
   position: relative;
@@ -73,13 +102,6 @@
   cursor: copy;
 }
 
-.math-copyable-inline,
-.math-source-box.math-copyable-inline {
-  cursor: copy;
-  border-bottom: 1px dotted currentColor;
-}
-
-.math-copyable-inline.copied,
 .math-copyable-display.copied,
 .math-source-box.copied {
   outline: 2px solid var(--accent);
@@ -108,10 +130,13 @@
   border-color: var(--accent);
 }
 
+.katex-error,
 .math-render-error {
-  color: var(--warn);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  white-space: pre-wrap;
+  color: inherit !important;
+  background: transparent !important;
+  border: 0 !important;
+  font-family: inherit;
+  white-space: normal;
 }
 
 #cardBody .katex-display,

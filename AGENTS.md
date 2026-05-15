@@ -9,8 +9,10 @@ This repo is a public, opinionated, bilingual learning atlas. Anyone (human or a
 
 ## Workflow
 
-- Routine docs, card, graph, and small site fixes may be committed directly to main.
-- Use a short-lived branch or pull request for larger site/runtime/lab changes when checks should gate before public Pages publication.
+- Create a short-lived task branch from main, commit the change there, and open a pull request.
+- Treat the pull request as a traceable sync record, not as a request for manual user intervention.
+- Merge the pull request automatically once checks allow it; if no checks are required and the change is straightforward, merge immediately.
+- Do not commit routine changes directly to main.
 - Do not use long-lived branches as topic folders.
 
 ## Adding a new paper / resource
